@@ -36,6 +36,29 @@ class ShortenerController extends AbstractController
     }
 
     /**
+     * @Route("/{slug}")
+     * @param $slug
+     * @return RedirectResponse
+     */
+    public function navigate($slug)
+    {
+        $entityManager = $this->getDoctrine()->getManager();
+        $urlPair = $entityManager->getRepository(UrlPair::class)
+            ->findByShortUrl($slug);
+
+        if (!$urlPair)
+            throw new NotFoundHttpException('Page not found');
+
+        $urlPair->setUsedTimes($urlPair->getUsedTimes() + 1);
+
+        //update usage counter
+        $entityManager->persist($urlPair);
+        $entityManager->flush();
+
+        return $this->redirect($urlPair->getLongUrl());
+    }
+
+    /**
      * @Route("/api/shorten/url", name="shorten")
      * @Method({"POST"})
      * @param Request $request
