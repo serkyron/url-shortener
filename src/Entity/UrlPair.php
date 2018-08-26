@@ -79,7 +79,11 @@ class UrlPair
 
     public function getLongUrl(): ?string
     {
-        return $this->long_url;
+        if (strpos($this->long_url, 'http://') !== false
+            || strpos($this->long_url, 'https://') !== false)
+            return $this->long_url;
+
+        return "http://{$this->long_url}";
     }
 
     public function setLongUrl(string $long_url): self

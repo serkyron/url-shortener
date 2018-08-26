@@ -19,6 +19,16 @@ class UrlPairRepository extends ServiceEntityRepository
         parent::__construct($registry, UrlPair::class);
     }
 
+    public function findByShortUrl($value)
+    {
+        $qb = $this->createQueryBuilder('url_pair');
+
+        return $qb->where($qb->expr()->like('url_pair.short_url', ':val'))
+            ->setParameter('val', "%$value%")
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
 //    /**
 //     * @return UrlPair[] Returns an array of UrlPair objects
 //     */
