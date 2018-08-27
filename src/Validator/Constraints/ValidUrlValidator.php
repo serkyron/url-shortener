@@ -14,13 +14,13 @@ use Symfony\Component\Validator\Exception\UnexpectedTypeException;
 
 class ValidUrlValidator extends ConstraintValidator
 {
-    private $validStatusCodes = [200, 301, 500];
-
     public function validate($value, Constraint $constraint)
     {
+        $validStatusCodes = explode(',', getenv('VALID_RESPONSE_CODES'));
+
         $options = [
             CURLOPT_URL => $value,
-            CURLOPT_RETURNTRANSFER => 1
+            CURLOPT_RETURNTRANSFER => true
         ];
 
         $ch = curl_init();
@@ -28,7 +28,7 @@ class ValidUrlValidator extends ConstraintValidator
         curl_exec($ch);
         $statusCode = curl_getinfo ($ch, CURLINFO_RESPONSE_CODE);
 
-        if (!in_array($statusCode, $this->validStatusCodes))
+        if (!in_array($statusCode, $validStatusCodes))
         {
             $this->context->buildViolation($constraint->message)
                 ->setParameter('{{ url }}', $value)

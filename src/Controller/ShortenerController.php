@@ -3,10 +3,12 @@
 namespace App\Controller;
 
 use App\Entity\UrlPair;
+use App\Validator\Constraints\NoNonWordChars;
 use App\Validator\Constraints\UnusedShortUrl;
 use App\Validator\Constraints\ValidUrl;
 use Doctrine\ORM\EntityManager;
 use PharIo\Manifest\Url;
+use phpDocumentor\Reflection\Types\Array_;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -18,6 +20,7 @@ use Symfony\Component\Validator\Constraints\Blank;
 use Symfony\Component\Validator\Constraints\Collection;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -32,7 +35,14 @@ class ShortenerController extends AbstractController
      */
     public function index()
     {
-        return $this->render('home.html.twig');
+        $requestedUrlMaxLength = getenv('REQUESTED_URL_MAX_LENGTH');
+        $host = getenv('APP_URL');
+        $requestedUrlMask = $host."/".implode("N", array_fill(0, $requestedUrlMaxLength, ""));
+
+        return $this->render('home.html.twig', [
+            'host' => $host,
+            'requestedUrlMask' => $requestedUrlMask
+        ]);
     }
 
     /**
@@ -60,7 +70,7 @@ class ShortenerController extends AbstractController
 
     /**
      * @Route("/api/shorten/url", name="shorten")
-     * @Method({"POST"})
+     * @Method({"GET"})
      * @param Request $request
      * @param SerializerInterface $serializer
      * @param ValidatorInterface $validator
@@ -93,14 +103,14 @@ class ShortenerController extends AbstractController
         $entityManager->flush();
 
         return new JsonResponse([
-            'short_url' => $urlPair->getShortUrl()
+            'short_url' => getenv('APP_URL').'/'.$urlPair->getShortUrl()
         ]);
     }
 
     private function getUniqueShortUrl(EntityManager $entityManager)
     {
         $rep = $entityManager->getRepository(UrlPair::class);
-        $codeLength = 16;
+        $codeLength = getenv('SHORT_URL_LENGTH');
 
         do {
             $code = bin2hex(random_bytes($codeLength));
@@ -124,9 +134,10 @@ class ShortenerController extends AbstractController
         {
             $constraints['requested'] = [
                 new Length([
-                    'min' => 5,
-                    'max' => 20
+                    'min' => getenv('REQUESTED_URL_MIN_LENGTH'),
+                    'max' => getenv('REQUESTED_URL_MAX_LENGTH')
                 ]),
+                new NoNonWordChars(),
                 new UnusedShortUrl()
             ];
         }

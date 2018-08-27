@@ -23,8 +23,8 @@ class UrlPairRepository extends ServiceEntityRepository
     {
         $qb = $this->createQueryBuilder('url_pair');
 
-        return $qb->where($qb->expr()->like('url_pair.short_url', ':val'))
-            ->setParameter('val', "%$value%")
+        return $qb->where('url_pair.short_url = :val')
+            ->setParameter('val', $value)
             ->getQuery()
             ->getOneOrNullResult();
     }
