@@ -37,7 +37,7 @@
                 <label for="requested">Preferred short URL</label>
                 <div class="d-flex align-items-center">
                     {#<span class="mr-1">{{ host }}/</span>#}
-                    <input readonly value="{{ host }}/" type="text" class="form-control fake-input col-2" >
+                    <input readonly value="{{ host }}/" type="text" class="form-control fake-input col-3" >
                     <input @focus="_cleanErrors()" v-model="formData.requested" v-mask="'{{ requestedUrlMask }}'" type="text" class="form-control" id="requested" placeholder="wHFRGug4g">
                 </div>
                 <div v-if="errors.requested.length" class="text-danger">
