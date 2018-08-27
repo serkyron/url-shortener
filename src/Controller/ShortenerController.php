@@ -38,7 +38,7 @@ class ShortenerController extends AbstractController
     {
         $requestedUrlMaxLength = getenv('REQUESTED_URL_MAX_LENGTH');
         $host = getenv('APP_URL');
-        $requestedUrlMask = $host."/".implode("N", array_fill(0, $requestedUrlMaxLength, ""));
+        $requestedUrlMask = implode("N", array_fill(0, $requestedUrlMaxLength, ""));
 
         return $this->render('home.html.twig', [
             'host' => $host,

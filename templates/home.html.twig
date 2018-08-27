@@ -35,7 +35,11 @@
             </div>
             <div class="form-group mb-5">
                 <label for="requested">Preferred short URL</label>
-                <input @focus="_cleanErrors()" v-model="formData.requested" v-mask="'{{ requestedUrlMask }}'" type="text" class="form-control" id="requested" placeholder="{{ host }}/wHFRGug4g">
+                <div class="d-flex align-items-center">
+                    {#<span class="mr-1">{{ host }}/</span>#}
+                    <input readonly value="{{ host }}/" type="text" class="form-control fake-input col-2" >
+                    <input @focus="_cleanErrors()" v-model="formData.requested" v-mask="'{{ requestedUrlMask }}'" type="text" class="form-control" id="requested" placeholder="wHFRGug4g">
+                </div>
                 <div v-if="errors.requested.length" class="text-danger">
                     <small v-for="error in errors.requested" class="error p-1"><% error %></small>
                 </div>
@@ -47,6 +51,12 @@
 
 {% block css %}
     <style>
+        .fake-input:focus {
+            border-color: #ced4da;
+            box-shadow: none;
+            cursor: default;
+        }
+
         .container {
             flex-grow: 1;
         }
@@ -166,7 +176,7 @@
                     };
 
                     if (this.formData.requested)
-                        data.requested = this._removeHostMask(this.formData.requested);
+                        data.requested = this.formData.requested;
 
                     return data;
                 },
