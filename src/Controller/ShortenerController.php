@@ -24,6 +24,7 @@ use Symfony\Component\Validator\Constraints\Regex;
 use Symfony\Component\Validator\Validation;
 use Symfony\Component\Validator\Validator\ValidatorInterface;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Psr\Log\LoggerInterface;
 
 class ShortenerController extends AbstractController
 {
@@ -48,16 +49,19 @@ class ShortenerController extends AbstractController
     /**
      * @Route("/{slug}")
      * @param $slug
+     * @param LoggerInterface $logger
      * @return RedirectResponse
      */
-    public function navigate($slug)
+    public function navigate($slug, LoggerInterface $logger)
     {
         $entityManager = $this->getDoctrine()->getManager();
         $urlPair = $entityManager->getRepository(UrlPair::class)
             ->findByShortUrl($slug);
 
-        if (!$urlPair)
+        if (!$urlPair) {
+            $logger->info("Requested redirection to non-existent $slug");
             throw new NotFoundHttpException('Page not found');
+        }
 
         $urlPair->setUsedTimes($urlPair->getUsedTimes() + 1);
 
@@ -74,15 +78,17 @@ class ShortenerController extends AbstractController
      * @param Request $request
      * @param SerializerInterface $serializer
      * @param ValidatorInterface $validator
+     * @param LoggerInterface $logger
      * @return JsonResponse
      */
-    public function shorten(Request $request, SerializerInterface $serializer, ValidatorInterface $validator)
+    public function shorten(Request $request, SerializerInterface $serializer, ValidatorInterface $validator, LoggerInterface $logger)
     {
         $violations = $this->validateShortenRequest($request, $validator);
 
         if (count($violations))
         {
             $errors = $serializer->serialize($violations, 'json');
+            $logger->debug("Validation errors: $errors");
             return JsonResponse::fromJsonString($errors, 400);
         }
 
@@ -96,7 +102,7 @@ class ShortenerController extends AbstractController
         if ($request->query->has('requested'))
             $urlPair->setShortUrl($request->get('requested'));
         else
-            $urlPair->setShortUrl($this->getUniqueShortUrl($entityManager));
+            $urlPair->setShortUrl($this->getUniqueShortUrl($entityManager, $logger));
 
         //save the new url pair
         $entityManager->persist($urlPair);
@@ -107,7 +113,7 @@ class ShortenerController extends AbstractController
         ]);
     }
 
-    private function getUniqueShortUrl(EntityManager $entityManager)
+    private function getUniqueShortUrl(EntityManager $entityManager, LoggerInterface $logger)
     {
         $rep = $entityManager->getRepository(UrlPair::class);
         $codeLength = getenv('SHORT_URL_LENGTH');
@@ -115,6 +121,7 @@ class ShortenerController extends AbstractController
         do {
             $code = bin2hex(random_bytes($codeLength));
             $pair = $rep->findByShortUrl($code);
+            $logger->debug("Trying to generate a unique slug. Generated code: $code");;
         }
         while($pair);
 
