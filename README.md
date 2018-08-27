@@ -22,7 +22,7 @@ Usage:
 
 API usage:
 
-URL shortener accepts GET requests to /api/shorten/url
+URL shortener accepts POST requests to /api/shorten/url
 with the following parameters:
 
 - long_url - a valid URL. (required)

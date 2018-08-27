@@ -28,9 +28,9 @@
         <form>
             <div class="form-group mb-5">
                 <label for="long-url">Full URL</label>
-                <input @focus="_cleanErrors()" v-model="formData.longUrl" type="text" class="form-control" id="long-url" placeholder="Paste your link here">
-                <div v-if="errors.longUrl.length" class="text-danger">
-                    <small v-for="error in errors.longUrl" class="error p-1"><% error %></small>
+                <input @focus="_cleanErrors()" v-model="formData.long_url" type="text" class="form-control" id="long-url" placeholder="Paste your link here">
+                <div v-if="errors.long_url.length" class="text-danger">
+                    <small v-for="error in errors.long_url" class="error p-1"><% error %></small>
                 </div>
             </div>
             <div class="form-group mb-5">
@@ -83,11 +83,11 @@
 
             data: {
                 errors: {
-                    longUrl: [],
+                    long_url: [],
                     requested: []
                 },
                 formData: {
-                    longUrl: "",
+                    long_url: "",
                     requested: ""
                 },
                 shortUrl: null,
@@ -141,7 +141,7 @@
                 },
 
                 _cleanErrors: function() {
-                    this.errors.longUrl = [];
+                    this.errors.long_url = [];
                     this.errors.requested = [];
                 },
 
@@ -152,17 +152,27 @@
                 _isFormValid: function () {
                     var valid = true;
 
-                    if (!this._isValidUrl(this.formData.longUrl)) {
-                        this.errors.longUrl.push('Not a valid URL');
+                    if (!this._isValidUrl(this.formData.long_url)) {
+                        this.errors.long_url.push('Not a valid URL');
                         valid = false;
                     }
 
                     return valid;
                 },
 
+                _getPostData: function() {
+                    var data = {
+                        long_url: this.formData.long_url
+                    };
+
+                    if (this.formData.requested)
+                        data.requested = this._removeHostMask(this.formData.requested);
+
+                    return data;
+                },
+
                 submit: function() {
                     this._cleanErrors();
-                    var url = "{{ path('shorten') }}/?long_url=" + this.formData.longUrl;
                     var self = this;
 
                     if (!this._isFormValid())
@@ -170,10 +180,7 @@
 
                     this._startProgress();
 
-                    if (this.formData.requested)
-                        url += '&requested='+this._removeHostMask(this.formData.requested);
-
-                    axios.get(url)
+                    axios.post("{{ path('shorten') }}", Qs.stringify(this._getPostData()))
                         .then(function (response) {
                             self.shortUrl = response.data.short_url;
                             self.progress = 100;
@@ -186,7 +193,7 @@
                             e.response.data.violations.forEach(function(violation) {
                                 switch (violation.propertyPath) {
                                     case '[long_url]':
-                                        self.errors.longUrl.push(violation.title);
+                                        self.errors.long_url.push(violation.title);
                                         break;
                                     case '[requested]':
                                         self.errors.requested.push(violation.title);

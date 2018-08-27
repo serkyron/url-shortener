@@ -47,6 +47,9 @@ class ShortenerController extends AbstractController
     }
 
     /**
+     * Redirects users from short URL to the original URL.
+     * If no record with such short url found in the DB, then 404 page returned.
+     *
      * @Route("/{slug}")
      * @param $slug
      * @param LoggerInterface $logger
@@ -74,7 +77,7 @@ class ShortenerController extends AbstractController
 
     /**
      * @Route("/api/shorten/url", name="shorten")
-     * @Method({"GET"})
+     * @Method({"POST"})
      * @param Request $request
      * @param SerializerInterface $serializer
      * @param ValidatorInterface $validator
@@ -99,7 +102,7 @@ class ShortenerController extends AbstractController
         $urlPair->setLongUrl($request->get('long_url'));
         $urlPair->setCreatedAt(new \DateTime());
 
-        if ($request->query->has('requested'))
+        if ($request->request->has('requested'))
             $urlPair->setShortUrl($request->get('requested'));
         else
             $urlPair->setShortUrl($this->getUniqueShortUrl($entityManager, $logger));
@@ -137,7 +140,7 @@ class ShortenerController extends AbstractController
             ]
         ];
 
-        if ($request->query->has('requested'))
+        if ($request->request->has('requested'))
         {
             $constraints['requested'] = [
                 new Length([
@@ -149,6 +152,6 @@ class ShortenerController extends AbstractController
             ];
         }
 
-        return $validator->validate($request->query->all(), new Collection($constraints));
+        return $validator->validate($request->request->all(), new Collection($constraints));
     }
 }
